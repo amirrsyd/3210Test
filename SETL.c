@@ -183,7 +183,7 @@ int main( int argc, char** argv)
 
     int *answers = (int*)malloc(sizeof(int) * searchRowsToReceive(size, patternSize, numtasks, rank));
 
-    printf("Rank: %d - Received size=%d, pSize=%d, iterations=%d\n", rank, size, patternSize, iterations);
+//    printf("Rank: %d - Received size=%d, pSize=%d, iterations=%d\n", rank, size, patternSize, iterations);
     }
     if(rank == 0){
         printf("Rank: %d - Entering distribute pattern\n", rank);
@@ -208,10 +208,10 @@ int main( int argc, char** argv)
         rotate90(patterns[dir-1], patterns[dir], patternSize);
     }
 
-    printf("Rank: %d - Pattern received outside function:\n", rank);
+  //  printf("Rank: %d - Pattern received outside function:\n", rank);
 
 #ifdef DEBUG
-    printSquareMatrix(patterns[N], patternSize);
+ //   printSquareMatrix(patterns[N], patternSize);
 #endif
 }
     int* countBuffer;
@@ -231,14 +231,14 @@ int main( int argc, char** argv)
         int searchToReceive = searchRowsToReceive(size, patternSize, numtasks, rank);
         smallSearch = allocateRektMatrix(size+2, searchToReceive, DEAD);
         rowsReceived = receiveSearch(smallSearch, size, numtasks, searchToReceive, iterations, iter, rank);
-        printf("Rank: %d - rowsReceived: %d\n", rank, rowsReceived);
+//        printf("Rank: %d - rowsReceived: %d\n", rank, rowsReceived);
         countBuffer = (int*) malloc(sizeof(int*) * rowsReceived * size);
 
         searchPatterns(smallSearch, size, rowsReceived, iter, patterns, patternSize, countBuffer, &foundCount, rank, (size - patternSize + 1)/(numtasks-1));
 
         MPI_Send(&countBuffer[0], foundCount, MPI_INT, 0, (iterations+numtasks*2) + (iterations*numtasks) + numtasks + (iter*numtasks)+rank, MPI_COMM_WORLD);
         
-        printf("RANK: %d ITER: %d SEARCH FINISH LIAO FOUNDCOUNT = %d\n", rank, iter, foundCount );
+    //    printf("RANK: %d ITER: %d SEARCH FINISH LIAO FOUNDCOUNT = %d\n", rank, iter, foundCount );
 }
         if(rank == 0){
             int t, number_amount, k;
@@ -253,24 +253,24 @@ int main( int argc, char** argv)
                     insertEnd(list, number_buf[k], number_buf[k+1], number_buf[k+2], number_buf[k+3]);
                 }
             }
-            printf("Rank: 0 - Before enter distribute world\n");
+        //    printf("Rank: 0 - Before enter distribute world\n");
             distributeWorld(curW, size, numtasks, iter);
         }
    if(rank!=0){     
         int rowsToReceive = worldRowsToReceive(size, numtasks, rank);
         curSmallWorld = allocateRektMatrix(size+2, rowsToReceive, DEAD);
-        printf("Rank: %d - Allocated %d rows to memory and entering receiveWorld\n", rank, rowsToReceive);
+      //  printf("Rank: %d - Allocated %d rows to memory and entering receiveWorld\n", rank, rowsToReceive);
         rowsReceived = receiveWorld(curSmallWorld, size, numtasks, iter, rank);
-        printf("Rank: %d - Outside receiveWorld function, task received %d rows from root in iteration %d:\n", rank, rowsReceived,iter);
-        printRektMatrix(curSmallWorld, size, rowsReceived);
+      //  printf("Rank: %d - Outside receiveWorld function, task received %d rows from root in iteration %d:\n", rank, rowsReceived,iter);
+   //     printRektMatrix(curSmallWorld, size, rowsReceived);
 
         nextSmallWorld = allocateRektMatrix(size+2, rowsReceived, DEAD);
-        printf("Rank: %d - Finished printing received matrix\n", rank);
+       // printf("Rank: %d - Finished printing received matrix\n", rank);
 
         //Generate next generation
-        printf("Rank: %d - WHAT?!?! Small world is evolving!\n", rank);
+  //      printf("Rank: %d - WHAT?!?! Small world is evolving!\n", rank);
         evolveWorld( curSmallWorld, nextSmallWorld, size, rowsToReceive-2 );
-        printf("Rank: %d - World has evolved!\n", rank);
+       // printf("Rank: %d - World has evolved!\n", rank);
 
         returnWorld(nextSmallWorld, size, numtasks, rowsReceived, iter, rank);
     }   
@@ -305,7 +305,7 @@ int main( int argc, char** argv)
         freeSquareMatrix( patterns[3] );
     
     }
-
+    MPI_Finalize();
     return 0;
 }
 
@@ -380,9 +380,9 @@ int receiveWorld(char **curSmallWorld, int size, int numTasks, int curIteration,
     
     elementCount = rowsReceived*(size +2) ;    
     recvWorldBuffer = (char*) malloc(sizeof(char*) * elementCount);
-    printf("Rank: %d - Waiting to receive %d rows from root....\n", rank, rowsReceived);
+   // printf("Rank: %d - Waiting to receive %d rows from root....\n", rank, rowsReceived);
     MPI_Recv(&recvWorldBuffer[0], elementCount, MPI_CHAR, 0, (curIteration*numTasks*2)+ numTasks + rank, MPI_COMM_WORLD, &Stat);
-    printf("Rank: %d - Received %d rows from root - SUCCESS\n", rank, rowsReceived);
+   // printf("Rank: %d - Received %d rows from root - SUCCESS\n", rank, rowsReceived);
 
     curSmallWorld[0] = recvWorldBuffer;
     for (i = 1; i < rowsReceived; i++){
@@ -399,9 +399,9 @@ int receiveSearch(char **curSmallWorld, int size, int numTasks, int rowsReceived
     
     elementCount = rowsReceived*(size +2) ;    
     recvWorldBuffer = (char*) malloc(sizeof(char*) * elementCount);
-    printf("Rank: %d - Waiting to receive %d SEARCH rows from root....\n", rank, rowsReceived);
+   // printf("Rank: %d - Waiting to receive %d SEARCH rows from root....\n", rank, rowsReceived);
     MPI_Recv(&recvWorldBuffer[0], elementCount, MPI_CHAR, 0, (iterations*numTasks*2)+ (curIteration * numTasks) +rank, MPI_COMM_WORLD, &Stat);
-    printf("Rank: %d - Received %d SEARCH rows from root - SUCCESS\n", rank, rowsReceived);
+   // printf("Rank: %d - Received %d SEARCH rows from root - SUCCESS\n", rank, rowsReceived);
 
     curSmallWorld[0] = recvWorldBuffer;
     for (i = 1; i < rowsReceived; i++){
@@ -414,63 +414,63 @@ int receiveSearch(char **curSmallWorld, int size, int numTasks, int rowsReceived
 void receivePattern(char **pattern, int patternSize, int iterations, int numTasks, int rank){
     char* patternRecvBuffer = (char*)malloc(sizeof(char) * patternSize*patternSize);
     MPI_Status Stat;
-
-    printf("Rank: %d - Waiting to receive pattern...\n", rank);
+    int i;
+   // printf("Rank: %d - Waiting to receive pattern...\n", rank);
 
     MPI_Recv(&patternRecvBuffer[0], patternSize*patternSize, MPI_CHAR, 0, (iterations*numTasks*2) + (iterations*numTasks) + (2*numTasks) + rank, MPI_COMM_WORLD, &Stat);
-    printf("Rank: %d - Pattern received - SUCCESS\n", rank);
+   // printf("Rank: %d - Pattern received - SUCCESS\n", rank);
 
     pattern[0] = patternRecvBuffer;
-    for(int i = 1; i<patternSize; i++){
+    for(i = 1; i<patternSize; i++){
         pattern[i] = &patternRecvBuffer[i*patternSize];
     }
 
-    printf("Rank: %d - Pattern received in function:\n", rank);
-    printSquareMatrix(pattern, patternSize);
+   // printf("Rank: %d - Pattern received in function:\n", rank);
+  //  printSquareMatrix(pattern, patternSize);
 }
 
 void distributePattern(char **pattern, int patternSize, int numTasks, int iterations){
     int task; 
 
-    printf("Rank: 0 - Inside distribute pattern\n");
+   // printf("Rank: 0 - Inside distribute pattern\n");
 
     for(task = 1; task<numTasks; task++){
-        printf("Rank: 0 - distributing pattern to task %d....\n", task);
+   //     printf("Rank: 0 - distributing pattern to task %d....\n", task);
         MPI_Send(&pattern[0][0], patternSize*patternSize, MPI_CHAR, 
             task, (iterations*numTasks*2) + (iterations*numTasks) + (2*numTasks) + task, MPI_COMM_WORLD);
-        printf("Rank: 0 - distribute pattern to task %d - SUCCESS\n", task);        
+   //     printf("Rank: 0 - distribute pattern to task %d - SUCCESS\n", task);        
     }
 }
 
 void distributeWorld(char** curWorld, int size, int numTasks, int curIteration){
     int rowsPerTask, rowsGiven, elementCount, i;
 
-    printf("Rank 0 - Inside distribute world\n");
+   // printf("Rank 0 - Inside distribute world\n");
     rowsPerTask = size/(numTasks-1);
     rowsGiven = rowsPerTask + 2;
     elementCount = rowsGiven * (size + 2);
 
     for (i = 1; i < numTasks; i++){
-        printf("Rank 0 - Distributing world to task: %d....\n", i);
+  //      printf("Rank 0 - Distributing world to task: %d....\n", i);
         if(i != (numTasks -1)){
             MPI_Send(&curWorld[rowsPerTask*(i-1)][0], elementCount, MPI_CHAR, i, (curIteration*numTasks*2)+ numTasks +i, MPI_COMM_WORLD);
         }else{
             MPI_Send(&curWorld[rowsPerTask*(i-1)][0], (size - (rowsPerTask * (i-1)) + 2) * (size + 2), MPI_CHAR, i, (curIteration*numTasks*2) + numTasks +i, MPI_COMM_WORLD);
         }
-        printf("Rank 0 - Distributed world to task: %d - SUCCESS\n", i);
+    //    printf("Rank 0 - Distributed world to task: %d - SUCCESS\n", i);
     }    
 }
 
 void distributeSearch(char** curWorld, int size, int pSize, int numTasks, int iterations, int curIteration){
     int rowsPerTask, rowsGiven, elementCount, i;
 
-    printf("Rank 0 - Inside distribute search\n");
+   // printf("Rank 0 - Inside distribute search\n");
     rowsPerTask = (size - (pSize - 1)) / (numTasks-1);
     rowsGiven = rowsPerTask + pSize;
     elementCount = rowsGiven * (size + 2);
 
     for (i = 1; i < numTasks; i++){
-        printf("Rank 0 - Distributing search to task: %d....\n", i);
+    //    printf("Rank 0 - Distributing search to task: %d....\n", i);
         if(i != (numTasks -1)){
             MPI_Send(&curWorld[rowsPerTask*(i-1)][0], elementCount, MPI_CHAR, i, (iterations*numTasks*2)+ (curIteration * numTasks) +i, MPI_COMM_WORLD);
         }else{
@@ -478,7 +478,7 @@ void distributeSearch(char** curWorld, int size, int pSize, int numTasks, int it
             elementCount = rowsGiven * (size + 2);        
             MPI_Send(&curWorld[rowsPerTask*(i-1)][0], elementCount, MPI_CHAR, i, (iterations*numTasks*2)+ (curIteration * numTasks) +i, MPI_COMM_WORLD);
         }
-        printf("Rank 0 - Distributed search to task: %d - SUCCESS\n", i);
+      //  printf("Rank 0 - Distributed search to task: %d - SUCCESS\n", i);
     }    
 }
 
@@ -569,11 +569,11 @@ void printRektMatrix(char** matrix, int size, int row){
     int i, j;
     for (i = 0; i < row; i++){
         for (j = 0; j < size; j++){
-            printf("%c", matrix[i][j]);
+        //    printf("%c", matrix[i][j]);
         }
-        printf("\n");
+       // printf("\n");
     }
-    printf("\n");
+   // printf("\n");
 }
 
 void printSquareMatrix( char** matrix, int size )
@@ -582,11 +582,11 @@ void printSquareMatrix( char** matrix, int size )
     
     for (i = 0; i < size; i++){
         for (j = 0; j < size; j++){
-            printf("%c", matrix[i][j]);
+     //       printf("%c", matrix[i][j]);
         }
-        printf("\n");
+     //   printf("\n");
     }
-    printf("\n");
+//    printf("\n");
 }
 
 void freeSquareMatrix( char** matrix )
@@ -741,7 +741,7 @@ void searchSinglePattern(char** world, int wSize, int numRows, int iteration,
 
     int offset = (rank-1)*rowsPerTask;
 
-    printf("INSIDE SINGLE PATTERN FOUNDCOUNT: %d\n", *foundCount);
+   // printf("INSIDE SINGLE PATTERN FOUNDCOUNT: %d\n", *foundCount);
     for (wRow = 1; wRow <= ((numRows-1)-pSize+1); wRow++){
         for (wCol = 1; wCol <= (wSize-pSize+1); wCol++){
             match = 1;
