@@ -85,6 +85,7 @@ void insertEnd(MATCHLIST*, int, int, int, int);
 
 void printList(MATCHLIST*);
 
+MATCHLIST* joinLists(MATCHLIST* list0, MATCHLIST* list1);
 
 /***********************************************************
    Search related functions
@@ -186,9 +187,9 @@ int main( int argc, char** argv)
 //    printf("Rank: %d - Received size=%d, pSize=%d, iterations=%d\n", rank, size, patternSize, iterations);
     }
     if(rank == 0){
-        printf("Rank: %d - Entering distribute pattern\n", rank);
+        //printf("Rank: %d - Entering distribute pattern\n", rank);
         distributePattern(patterns[N], patternSize, numtasks, iterations);
-        printf("Rank: %d - Outside distribute pattern, pattern distributed\n", rank);
+        //printf("Rank: %d - Outside distribute pattern, pattern distributed\n", rank);
      
         //Start timer
         before = wallClockTime();
@@ -242,6 +243,11 @@ int main( int argc, char** argv)
 }
         if(rank == 0){
             int t, number_amount, k;
+            MATCHLIST * iterList = newList();
+            MATCHLIST* temp0 = newList();
+            MATCHLIST* temp1 = newList();
+            MATCHLIST* temp2 = newList();
+            MATCHLIST* temp3 = newList();
             for(t = 1; t<numtasks; t++){
                 number_amount = 0;
                 MPI_Probe(t, (iterations+numtasks*2) + (iterations*numtasks) + numtasks + (iter*numtasks) + t, MPI_COMM_WORLD, &Stat);
@@ -250,9 +256,21 @@ int main( int argc, char** argv)
                 MPI_Recv(number_buf, number_amount, MPI_INT, t, (iterations+numtasks*2) + (iterations*numtasks) + numtasks + (iter*numtasks) + t,
              MPI_COMM_WORLD, &Stat);
                 for(k = 0; k<number_amount; k+=4){
-                    insertEnd(list, number_buf[k], number_buf[k+1], number_buf[k+2], number_buf[k+3]);
+                    if(number_buf[k+3]==0){
+                        insertEnd(temp0, number_buf[k], number_buf[k+1], number_buf[k+2], number_buf[k+3]);
+                    }else if(number_buf[k+3]==1){
+                        insertEnd(temp1, number_buf[k], number_buf[k+1], number_buf[k+2], number_buf[k+3]);
+                    }else if(number_buf[k+3]==2){
+                        insertEnd(temp2, number_buf[k], number_buf[k+1], number_buf[k+2], number_buf[k+3]);
+                    }else if(number_buf[k+3]==3){
+                        insertEnd(temp3, number_buf[k], number_buf[k+1], number_buf[k+2], number_buf[k+3]);
+                    }
                 }
             }
+            iterList = joinLists(temp0, temp1);
+            iterList = joinLists(iterList, temp2);
+            iterList = joinLists(iterList, temp3);
+            list = joinLists(list, iterList);
         //    printf("Rank: 0 - Before enter distribute world\n");
             distributeWorld(curW, size, numtasks, iter);
         }
@@ -569,11 +587,11 @@ void printRektMatrix(char** matrix, int size, int row){
     int i, j;
     for (i = 0; i < row; i++){
         for (j = 0; j < size; j++){
-        //    printf("%c", matrix[i][j]);
+            printf("%c", matrix[i][j]);
         }
-       // printf("\n");
+        printf("\n");
     }
-   // printf("\n");
+    printf("\n");
 }
 
 void printSquareMatrix( char** matrix, int size )
@@ -582,11 +600,11 @@ void printSquareMatrix( char** matrix, int size )
     
     for (i = 0; i < size; i++){
         for (j = 0; j < size; j++){
-     //       printf("%c", matrix[i][j]);
+            printf("%c", matrix[i][j]);
         }
-     //   printf("\n");
+        printf("\n");
     }
-//    printf("\n");
+    printf("\n");
 }
 
 void freeSquareMatrix( char** matrix )
@@ -837,6 +855,32 @@ void insertEnd(MATCHLIST* list,
 
     (list->nItem)++;
 
+}
+
+MATCHLIST* joinLists(MATCHLIST* list0, MATCHLIST* list1){
+    MATCHLIST* joined;
+    if((list0->nItem ==0)&&(list1->nItem ==0)){
+        return joined;
+    }else if(list0->nItem ==0){
+        joined = list1;
+        return joined;
+    }else if(list1->nItem ==0){
+        joined = list0;
+        return joined;
+    }else{
+        MATCH* tempItem;
+
+        tempItem = (MATCH*) malloc(sizeof(MATCH));
+        if (tempItem == NULL)
+            die(__LINE__);      
+
+        tempItem->next = list0->tail->next;
+        list0->tail->next = list1->tail->next;
+        list1->tail->next = tempItem->next;
+        joined = list1;
+        joined->nItem = list0->nItem + list1->nItem;
+        return joined; 
+    }
 }
 
 void printList(MATCHLIST* list)
